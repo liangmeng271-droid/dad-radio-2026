@@ -1,1 +1,1035 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>街坊收音机</title>
 
+  <!-- PWA必要配置 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="街坊收音机">
+  <meta name="theme-color" content="#2C1810">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%232C1810' width='100' height='100' rx='20'/><text y='.9em' font-size='80' x='10'>📻</text></svg>">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --main: #2C1810;
+      --gold: #D4A84B;
+      --bg: #FAF6F0;
+      --card: #fff;
+      --text: #2C1810;
+      --text2: #8B7355;
+      --dot: #E8A020;
+    }
+
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+      overflow-x: hidden;
+    }
+
+    /* ===== 顶部 ===== */
+    .header {
+      background: var(--main);
+      color: var(--bg);
+      padding: 20px 20px 24px;
+      position: relative;
+    }
+    .header h1 { font-size: 24px; font-weight: 800; letter-spacing: 3px; text-align: center; }
+    .header p { font-size: 13px; opacity: 0.6; text-align: center; margin-top: 4px; letter-spacing: 1px; }
+
+    /* ===== 正在播放卡片 ===== */
+    .now-playing {
+      background: var(--card);
+      margin: 16px;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(44,24,16,0.1);
+    }
+    .np-label {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+    .np-dot {
+      width: 8px; height: 8px;
+      background: var(--dot);
+      border-radius: 50%;
+      animation: blink 1.5s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .np-name { font-size: 22px; font-weight: 700; line-height: 1.3; }
+    .np-desc { font-size: 14px; color: var(--text2); margin-top: 4px; }
+
+    .np-status {
+      font-size: 13px;
+      color: var(--gold);
+      margin-top: 8px;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 播放/暂停 */
+    .np-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 18px;
+    }
+    .np-nav-btn {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: 2px solid var(--main);
+      background: transparent;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .np-nav-btn:active { background: var(--main); color: var(--bg); transform: scale(0.93); }
+
+    .np-play-btn {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      border: none;
+      background: var(--main);
+      color: var(--bg);
+      font-size: 26px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(44,24,16,0.3);
+      transition: all 0.15s;
+    }
+    .np-play-btn:active { transform: scale(0.93); background: var(--gold); }
+    .np-play-btn.playing { background: var(--gold); }
+
+    /* 音量 */
+    .np-volume {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      padding: 0 4px;
+    }
+    .np-volume .icon { font-size: 18px; flex-shrink: 0; }
+    .np-volume input[type=range] {
+      flex: 1; height: 5px;
+      -webkit-appearance: none;
+      background: #E0D5C8;
+      border-radius: 3px;
+    }
+    .np-volume input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px; height: 24px;
+      background: var(--main);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    /* ===== 频道列表 ===== */
+    .section-title {
+      padding: 16px 20px 8px;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .station-list { padding: 0 16px; }
+
+    .station-item {
+      background: var(--card);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      padding: 16px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(44,24,16,0.06);
+      transition: transform 0.12s, box-shadow 0.12s;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+    .station-item:active { transform: scale(0.98); box-shadow: 0 1px 4px rgba(44,24,16,0.1); }
+    .station-item.playing { border-left: 4px solid var(--gold); }
+
+    .station-item .num {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gold);
+      width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .station-item.playing .num { display: none; }
+
+    .station-item .playing-dot {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--gold);
+    }
+    .station-item .playing-dot::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px; height: 8px;
+      background: var(--dot);
+      border-radius: 50%;
+      animation: blink 1.5s infinite;
+    }
+    .station-item.playing .playing-dot { display: block; }
+    .station-item:not(.playing) .playing-dot { display: none; }
+
+    .station-item .icon { font-size: 30px; flex-shrink: 0; }
+    .station-item .info { flex: 1; min-width: 0; }
+    .station-item .name { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .station-item .desc { font-size: 14px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ===== 底部导航 ===== */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--card);
+      border-top: 1px solid rgba(44,24,16,0.08);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      z-index: 100;
+      box-shadow: 0 -2px 12px rgba(44,24,16,0.06);
+    }
+    .tab-btn {
+      background: none; border: none;
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 28px;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .tab-btn .icon { font-size: 26px; }
+    .tab-btn.active { color: var(--main); font-weight: 600; }
+    .tab-btn:active { background: rgba(44,24,16,0.05); }
+
+    /* ===== Tab 内容 ===== */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ===== 闹钟Tab ===== */
+    .alarm-list { padding: 0 16px 16px; }
+    .alarm-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text2);
+    }
+    .alarm-empty .icon { font-size: 48px; margin-bottom: 12px; }
+    .alarm-empty p { font-size: 16px; }
+    .alarm-empty .sub { font-size: 14px; margin-top: 4px; opacity: 0.7; }
+
+    .alarm-card {
+      background: var(--card);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 8px rgba(44,24,16,0.06);
+      position: relative;
+    }
+    .alarm-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .alarm-time { font-size: 36px; font-weight: 700; }
+    .alarm-toggle {
+      width: 54px; height: 32px;
+      background: #D0C8BE;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .alarm-toggle.on { background: var(--gold); }
+    .alarm-toggle::after {
+      content: '';
+      position: absolute;
+      width: 26px; height: 26px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: left 0.3s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .alarm-toggle.on::after { left: 25px; }
+
+    .alarm-detail { font-size: 14px; color: var(--text2); margin-top: 6px; }
+    .alarm-delete {
+      background: none; border: none;
+      color: #C0392B;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 6px 0;
+      margin-top: 4px;
+    }
+
+    /* 添加闹钟按钮 */
+    .add-alarm-btn {
+      display: block;
+      width: calc(100% - 32px);
+      margin: 0 16px 16px;
+      background: var(--main);
+      color: var(--bg);
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .add-alarm-btn:active { opacity: 0.8; }
+
+    /* 闹钟表单 */
+    .alarm-form {
+      background: var(--card);
+      border-radius: 20px;
+      margin: 0 16px 16px;
+      padding: 24px 20px;
+      box-shadow: 0 4px 20px rgba(44,24,16,0.1);
+    }
+    .alarm-form h3 { text-align: center; font-size: 20px; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label { font-size: 14px; color: var(--text2); margin-bottom: 8px; display: block; font-weight: 500; }
+
+    .form-time {
+      width: 100%;
+      font-size: 40px;
+      font-weight: 700;
+      border: none;
+      border-bottom: 2px solid var(--gold);
+      padding: 8px 0;
+      background: transparent;
+      color: var(--main);
+      text-align: center;
+      outline: none;
+      letter-spacing: 4px;
+    }
+
+    .form-days { display: flex; gap: 8px; flex-wrap: wrap; }
+    .day-btn {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      border: 2px solid #E0D5C8;
+      background: var(--bg);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      color: var(--text);
+    }
+    .day-btn.selected { background: var(--main); color: var(--bg); border-color: var(--main); }
+
+    .form-select {
+      width: 100%;
+      font-size: 17px;
+      padding: 12px 14px;
+      border: 2px solid #E0D5C8;
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--main);
+      outline: none;
+    }
+    .form-select:focus { border-color: var(--gold); }
+
+    .form-vol { display: flex; align-items: center; gap: 10px; }
+    .form-vol span { font-size: 18px; flex-shrink: 0; }
+    .form-vol input[type=range] {
+      flex: 1; height: 5px;
+      -webkit-appearance: none;
+      background: #E0D5C8;
+      border-radius: 3px;
+    }
+    .form-vol input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px; height: 24px;
+      background: var(--main);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .form-submit {
+      width: 100%;
+      background: var(--main);
+      color: var(--bg);
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .form-submit:active { opacity: 0.8; }
+
+    /* ===== 设置Tab ===== */
+    .setting-item {
+      background: var(--card);
+      margin: 0 16px 10px;
+      border-radius: 14px;
+      padding: 16px 18px;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(44,24,16,0.06);
+      transition: background 0.15s;
+    }
+    .setting-item:active { background: #F5EFE6; }
+    .setting-item .arrow { color: #CCC; }
+    .setting-item .val { color: var(--text2); font-size: 14px; }
+
+    .about-card {
+      background: var(--card);
+      margin: 16px;
+      border-radius: 20px;
+      padding: 28px 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(44,24,16,0.06);
+    }
+    .about-card .logo { font-size: 56px; margin-bottom: 8px; }
+    .about-card h3 { font-size: 22px; font-weight: 700; }
+    .about-card .ver { color: var(--text2); font-size: 14px; margin-top: 4px; }
+    .about-card .desc { color: var(--text2); font-size: 14px; margin-top: 8px; line-height: 1.5; }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(44,24,16,0.88);
+      color: #fff;
+      padding: 14px 30px;
+      border-radius: 14px;
+      font-size: 16px;
+      z-index: 9999;
+      pointer-events: none;
+      animation: toastIn 0.3s;
+      text-align: center;
+      max-width: 80vw;
+    }
+    @keyframes toastIn { from{opacity:0;transform:translate(-50%,-42%)} to{opacity:1;transform:translate(-50%,-50%)} }
+    .toast.hide { animation: toastOut 0.3s forwards; }
+    @keyframes toastOut { to{opacity:0;transform:translate(-50%,-42%)} }
+
+    /* ===== 加载动画 ===== */
+    .loading-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      gap: 8px;
+      color: var(--text2);
+      font-size: 14px;
+    }
+    .loading-dots span {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: dotBounce 1.4s infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBounce { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部 -->
+  <div class="header">
+    <h1>📻 街坊收音机</h1>
+    <p>专为父亲设计 · 打开就能听</p>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="bottom-bar">
+    <button class="tab-btn active" onclick="switchTab('radio')">
+      <span class="icon">📻</span>电台
+    </button>
+    <button class="tab-btn" onclick="switchTab('alarm')">
+      <span class="icon">⏰</span>闹钟
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings')">
+      <span class="icon">⚙️</span>设置
+    </button>
+  </div>
+
+  <!-- ========== 电台Tab ========== -->
+  <div class="tab-content active" id="tab-radio">
+
+    <!-- 正在播放 -->
+    <div class="now-playing">
+      <div class="np-label"><span class="np-dot"></span>正在播放</div>
+      <div class="np-name" id="npName">点击频道开始收听</div>
+      <div class="np-desc" id="npDesc">选择下方频道即可播放</div>
+      <div class="np-status" id="npStatus"></div>
+
+      <div class="np-controls">
+        <button class="np-nav-btn" onclick="prevStation()">⏮</button>
+        <button class="np-play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+        <button class="np-nav-btn" onclick="nextStation()">⏭</button>
+      </div>
+
+      <div class="np-volume">
+        <span>🔈</span>
+        <input type="range" id="volSlider" min="0" max="100" value="70" oninput="setVolume(this.value)">
+        <span>🔊</span>
+      </div>
+    </div>
+
+    <!-- 频道列表 -->
+    <div class="section-title">📰 新闻频道</div>
+    <div class="station-list" id="newsList"></div>
+
+    <div class="section-title">🎵 音乐频道</div>
+    <div class="station-list" id="musicList"></div>
+
+    <div class="section-title">📺 其他频道</div>
+    <div class="station-list" id="otherList"></div>
+  </div>
+
+  <!-- ========== 闹钟Tab ========== -->
+  <div class="tab-content" id="tab-alarm">
+    <button class="add-alarm-btn" onclick="toggleAlarmForm()">＋ 添加闹钟</button>
+    <div id="alarmForm" class="alarm-form" style="display:none;">
+      <h3>＋ 新增闹钟</h3>
+      <div class="form-group">
+        <label class="form-label">闹铃时间</label>
+        <input type="time" class="form-time" id="fTime" value="06:30">
+      </div>
+      <div class="form-group">
+        <label class="form-label">重复（点击选择）</label>
+        <div class="form-days" id="fDays">
+          <button class="day-btn" data-d="1">一</button>
+          <button class="day-btn" data-d="2">二</button>
+          <button class="day-btn" data-d="3">三</button>
+          <button class="day-btn" data-d="4">四</button>
+          <button class="day-btn" data-d="5">五</button>
+          <button class="day-btn" data-d="6">六</button>
+          <button class="day-btn" data-d="0">日</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">播放频道</label>
+        <select class="form-select" id="fStation"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">音量</label>
+        <div class="form-vol">
+          <span>🔈</span>
+          <input type="range" id="fVolume" min="30" max="100" value="70">
+          <span>🔊</span>
+        </div>
+      </div>
+      <button class="form-submit" onclick="saveAlarm()">💾 保存闹钟</button>
+    </div>
+    <div id="alarmList" class="alarm-list"></div>
+  </div>
+
+  <!-- ========== 设置Tab ========== -->
+  <div class="tab-content" id="tab-settings">
+    <div class="about-card">
+      <div class="logo">📻</div>
+      <h3>街坊收音机</h3>
+      <div class="ver">版本 1.0.0</div>
+      <div class="desc">专为父亲设计的收音机 App<br>打开就能听，不用学</div>
+    </div>
+    <div class="setting-item" onclick="clearCache()">🗑️ 清除播放缓存 <span class="arrow">→</span></div>
+    <div class="setting-item" onclick="resetStations()">🔄 重置播放记录 <span class="arrow">→</span></div>
+    <div class="setting-item" onclick="showToast('感谢使用街坊收音机 📻')">💬 意见反馈 <span class="arrow">→</span></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" style="display:none;"></div>
+
+  <!-- 隐藏的音频播放器 -->
+  <audio id="audio" preload="none" playsinline></audio>
+
+<script>
+// ════════════════════════════════════════════════
+//  频道数据（流媒体地址已填入）
+//  备注：以下URL基于公开资料整理，上线前请用Safari逐一实测
+//  实测方法：Safari打开链接，能播放即为有效
+// ════════════════════════════════════════════════
+const stations = [
+  // ===== 新闻频道 =====
+  {
+    name: "中央人民广播电台·中国之声",
+    desc: "央广主频率 · 新闻时事",
+    type: "news", icon: "📻",
+    url: "http://ls.live.cnr.cn/live/CNR1/live.m3u8"
+  },
+  {
+    name: "中国国际广播电台（CRI）",
+    desc: "CRI · 国际新闻",
+    type: "news", icon: "📻",
+    url: "http://ls.live.cnr.cn/live/CRI1/live.m3u8"
+  },
+  {
+    name: "广东新闻广播",
+    desc: "广东本地新闻",
+    type: "news", icon: "📻",
+    url: "https://gztv.gztv.com/live/gdxw.m3u8"
+  },
+  {
+    name: "凤凰卫视资讯台",
+    desc: "国际时事 · 军事",
+    type: "news", icon: "📻",
+    url: "https://live.dawan.net/phoenix/live.m3u8"
+  },
+  {
+    name: "香港电台 RTHK Radio 1",
+    desc: "香港本地新闻（粤语）",
+    type: "news", icon: "📻",
+    url: "https://rthkradio1-live.akamaized.net/hls/rthkradio1-live.m3u8"
+  },
+  {
+    name: "香港电台 RTHK Radio 3",
+    desc: "英语新闻",
+    type: "news", icon: "📻",
+    url: "https://rthkradio3-live.akamaized.net/hls/rthkradio3-live.m3u8"
+  },
+  {
+    name: "台湾中央广播电台",
+    desc: "台湾新闻",
+    type: "news", icon: "📻",
+    url: "http://202.39.65.37:80/rti/live"
+  },
+  // ===== 音乐频道 =====
+  {
+    name: "广东音乐广播",
+    desc: "广东本土音乐",
+    type: "music", icon: "🎵",
+    url: "https://gztv.gztv.com/live/gdyy.m3u8"
+  },
+  {
+    name: "中央广播民族音乐",
+    desc: "民族音乐",
+    type: "music", icon: "🎵",
+    url: "http://ls.live.cnr.cn/live/CNR3/live.m3u8"
+  },
+  {
+    name: "香港商业一台",
+    desc: "香港流行乐",
+    type: "music", icon: "🎵",
+    url: "https://fm881.hk2.mingliangtech.com/live/fm881.m3u8"
+  },
+  {
+    name: "台湾 Hit FM 联播网",
+    desc: "台湾流行音乐",
+    type: "music", icon: "🎵",
+    url: "http://live.hichannel.hinet.net/api/getStream.php?id=2009"
+  },
+  // ===== 其他频道 =====
+  {
+    name: "澳门电台",
+    desc: "澳门中葡双语",
+    type: "other", icon: "📺",
+    url: "http://live.tdm.com.mo/radio/tvfm/channels.m3u8"
+  },
+  {
+    name: "海峡之声",
+    desc: "两岸交流",
+    type: "other", icon: "📺",
+    url: "http://stream.hxzh.com:1935/live/hxzs"
+  },
+  {
+    name: "广东珠江经济台",
+    desc: "经济资讯 · 粤语",
+    type: "other", icon: "📺",
+    url: "https://gztv.gztv.com/live/zjjj.m3u8"
+  }
+];
+
+// ════════════════════════════════════════════════
+//  状态
+// ════════════════════════════════════════════════
+let currentIndex = 0;
+let isPlaying = false;
+let alarms = JSON.parse(localStorage.getItem('radio_alarms') || '[]');
+let selectedDays = [1, 2, 3, 4, 5]; // 默认周一至周五
+const audio = document.getElementById('audio');
+
+// ════════════════════════════════════════════════
+//  初始化
+// ════════════════════════════════════════════════
+function init() {
+  renderStations();
+  renderAlarmList();
+  buildStationSelect();
+
+  // 恢复上次播放
+  const last = localStorage.getItem('radio_last');
+  if (last !== null) {
+    currentIndex = parseInt(last);
+    updateNowPlaying();
+  }
+
+  // 音频事件监听
+  audio.addEventListener('playing', () => {
+    isPlaying = true;
+    document.getElementById('playBtn').textContent = '⏸';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('npStatus').textContent = '🎵 正在播放';
+    renderStations();
+  });
+  audio.addEventListener('pause', () => {
+    isPlaying = false;
+    document.getElementById('playBtn').textContent = '▶';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('npStatus').textContent = '⏸ 已暂停';
+    renderStations();
+  });
+  audio.addEventListener('waiting', () => {
+    document.getElementById('npStatus').innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> 正在缓冲...';
+  });
+  audio.addEventListener('error', (e) => {
+    document.getElementById('npStatus').textContent = '⚠️ 播放失败，请检查网络';
+    isPlaying = false;
+    document.getElementById('playBtn').textContent = '▶';
+    document.getElementById('playBtn').classList.remove('playing');
+    showToast('播放失败，频道地址可能已失效');
+  });
+
+  // 恢复音量
+  const vol = localStorage.getItem('radio_vol');
+  if (vol) {
+    audio.volume = parseFloat(vol);
+    document.getElementById('volSlider').value = Math.round(parseFloat(vol) * 100);
+  }
+}
+
+// ════════════════════════════════════════════════
+//  频道列表渲染
+// ════════════════════════════════════════════════
+function renderStations() {
+  const groups = { news: document.getElementById('newsList'), music: document.getElementById('musicList'), other: document.getElementById('otherList') };
+  Object.values(groups).forEach(el => el.innerHTML = '');
+
+  stations.forEach((s, i) => {
+    const html = `<div class="station-item${i === currentIndex ? ' playing' : ''}" onclick="playStation(${i})">
+      <div class="num">${i + 1}</div>
+      <div class="playing-dot"></div>
+      <div class="icon">${s.icon}</div>
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="desc">${s.desc}</div>
+      </div>
+    </div>`;
+    groups[s.type].insertAdjacentHTML('beforeend', html);
+  });
+}
+
+// ════════════════════════════════════════════════
+//  播放
+// ════════════════════════════════════════════════
+function playStation(index) {
+  currentIndex = index;
+  updateNowPlaying();
+  audio.src = stations[index].url;
+  audio.play().catch(e => {
+    showToast('播放失败，请检查网络连接');
+    document.getElementById('npStatus').textContent = '⚠️ 播放失败';
+  });
+  localStorage.setItem('radio_last', index);
+  renderStations();
+}
+
+function togglePlay() {
+  if (!audio.src || audio.currentSrc === '' || audio.src === window.location.href + '#') {
+    playStation(currentIndex);
+    return;
+  }
+  if (isPlaying) {
+    audio.pause();
+  } else {
+    audio.play().catch(e => showToast('播放失败'));
+  }
+}
+
+function prevStation() {
+  currentIndex = (currentIndex - 1 + stations.length) % stations.length;
+  playStation(currentIndex);
+}
+
+function nextStation() {
+  currentIndex = (currentIndex + 1) % stations.length;
+  playStation(currentIndex);
+}
+
+function updateNowPlaying() {
+  const s = stations[currentIndex];
+  document.getElementById('npName').textContent = s.name;
+  document.getElementById('npDesc').textContent = s.desc;
+}
+
+function setVolume(v) {
+  audio.volume = v / 100;
+  localStorage.setItem('radio_vol', v / 100);
+}
+
+// ════════════════════════════════════════════════
+//  Tab 切换
+// ════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes(tab));
+  });
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('active', c.id === 'tab-' + tab);
+  });
+}
+
+// ════════════════════════════════════════════════
+//  闹钟
+// ════════════════════════════════════════════════
+function buildStationSelect() {
+  const sel = document.getElementById('fStation');
+  sel.innerHTML = stations.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
+}
+
+function renderAlarmList() {
+  const list = document.getElementById('alarmList');
+  if (alarms.length === 0) {
+    list.innerHTML = `<div class="alarm-empty">
+      <div class="icon">⏰</div>
+      <p>还没有闹钟</p>
+      <p class="sub">点击上方"添加闹钟"开始设置</p>
+    </div>`;
+    return;
+  }
+  list.innerHTML = alarms.map((a, i) => `
+    <div class="alarm-card">
+      <div class="alarm-top">
+        <div class="alarm-time">${a.time}</div>
+        <button class="alarm-toggle${a.on ? ' on' : ''}" onclick="toggleAlarm(${i})"></button>
+      </div>
+      <div class="alarm-detail">${a.stationName} · ${formatDays(a.days)} · 音量${a.volume}%</div>
+      <button class="alarm-delete" onclick="delAlarm(${i})">🗑️ 删除闹钟</button>
+    </div>
+  `).join('');
+}
+
+function formatDays(days) {
+  const all = days === '0,1,2,3,4,5,6';
+  if (all) return '每天';
+  const d = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  return days.split(',').filter(Boolean).map(n => d[parseInt(n)]).join('、');
+}
+
+function toggleAlarm(i) {
+  alarms[i].on = !alarms[i].on;
+  localStorage.setItem('radio_alarms', JSON.stringify(alarms));
+  renderAlarmList();
+  if (alarms[i].on) scheduleAlarm(i);
+  else cancelAlarm(i);
+}
+
+function delAlarm(i) {
+  cancelAlarm(i);
+  alarms.splice(i, 1);
+  localStorage.setItem('radio_alarms', JSON.stringify(alarms));
+  renderAlarmList();
+  showToast('闹钟已删除');
+}
+
+function toggleAlarmForm() {
+  const form = document.getElementById('alarmForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  // 重置选中
+  selectedDays = [1, 2, 3, 4, 5];
+  document.querySelectorAll('.day-btn').forEach(b => {
+    b.classList.toggle('selected', selectedDays.includes(parseInt(b.dataset.d)));
+  });
+}
+
+function saveAlarm() {
+  const time = document.getElementById('fTime').value;
+  const stationIdx = parseInt(document.getElementById('fStation').value);
+  const volume = document.getElementById('fVolume').value;
+  const days = selectedDays.sort().join(',');
+
+  alarms.push({
+    time, stationIdx,
+    stationName: stations[stationIdx].name,
+    volume, days, on: true
+  });
+  localStorage.setItem('radio_alarms', JSON.stringify(alarms));
+  renderAlarmList();
+  scheduleAlarm(alarms.length - 1);
+  document.getElementById('alarmForm').style.display = 'none';
+  showToast('闹钟已保存 ✅');
+}
+
+// 闹钟调度（使用 setTimeout 简单实现，App 打开时自动设置）
+function scheduleAlarm(i) {
+  const a = alarms[i];
+  if (!a || !a.on) return;
+
+  // 计算下次触发时间
+  const [h, m] = a.time.split(':').map(Number);
+  const now = new Date();
+  const next = new Date();
+  next.setHours(h, m, 0, 0);
+
+  const days = a.days.split(',').map(Number);
+  const today = now.getDay();
+
+  // 找下一个匹配的日子
+  let found = false;
+  for (let offset = 0; offset < 8; offset++) {
+    const checkDay = (today + offset) % 7;
+    if (days.includes(checkDay)) {
+      next.setDate(next.getDate() + (offset === 0 && now >= next ? 1 : offset));
+      found = true;
+      break;
+    }
+  }
+  if (!found) return;
+
+  const delay = next.getTime() - now.getTime();
+  if (delay <= 0 || delay > 7 * 24 * 60 * 60 * 1000) return;
+
+  // 保存定时器ID
+  alarms[i].timerId = setTimeout(() => {
+    // 触发闹钟
+    currentIndex = alarms[i].stationIdx;
+    audio.volume = alarms[i].volume / 100;
+    playStation(alarms[i].stationIdx);
+    // 通知
+    if (Notification.permission === 'granted') {
+      new Notification('📻 街坊收音机', {
+        body: `${alarms[i].stationName} 正在播放`,
+        tag: 'alarm'
+      });
+    }
+    showToast(`⏰ 闹钟响了！${alarms[i].stationName}`);
+    // 重新调度明天
+    scheduleAlarm(i);
+  }, delay);
+}
+
+function cancelAlarm(i) {
+  if (alarms[i] && alarms[i].timerId) {
+    clearTimeout(alarms[i].timerId);
+  }
+}
+
+// 初始化时恢复所有闹钟
+function restoreAlarms() {
+  alarms.forEach((a, i) => {
+    if (a.on) scheduleAlarm(i);
+  });
+}
+
+// ════════════════════════════════════════════════
+//  工具
+// ════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.classList.remove('hide');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+function clearCache() {
+  localStorage.removeItem('radio_last');
+  showToast('播放记录已清除');
+}
+
+function resetStations() {
+  localStorage.removeItem('radio_last');
+  localStorage.removeItem('radio_vol');
+  currentIndex = 0;
+  audio.pause();
+  audio.src = '';
+  updateNowPlaying();
+  renderStations();
+  showToast('已重置');
+}
+
+// 天按钮交互
+document.querySelectorAll('.day-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    const d = parseInt(b.dataset.d);
+    if (selectedDays.includes(d)) {
+      selectedDays = selectedDays.filter(x => x !== d);
+      b.classList.remove('selected');
+    } else {
+      selectedDays.push(d);
+      b.classList.add('selected');
+    }
+  });
+});
+
+// 后台播放保护
+document.addEventListener('visibilitychange', () => {
+  // iOS Safari 会在后台暂停音频，需要保持音频活跃
+  if (document.visibilityState === 'hidden' && isPlaying) {
+    // 尝试保持后台播放
+    audio.load(); // 刷新音频状态
+  }
+});
+
+// iOS Audio Context 恢复（需用户交互触发）
+document.addEventListener('touchstart', () => {
+  if (audio.paused && audio.src) {
+    audio.play().catch(() => {});
+  }
+}, { once: false });
+
+// ════════════════════════════════════════════════
+//  启动
+// ════════════════════════════════════════════════
+init();
+restoreAlarms();
+</script>
+</body>
+</html>
