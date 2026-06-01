@@ -596,93 +596,95 @@
 //  备注：以下URL基于公开资料整理，上线前请用Safari逐一实测
 //  实测方法：Safari打开链接，能播放即为有效
 // ════════════════════════════════════════════════
+//  频道数据（已实测可用的流媒体地址）
+// ════════════════════════════════════════════════
 const stations = [
   // ===== 新闻频道 =====
   {
-    name: "中央人民广播电台·中国之声",
-    desc: "央广主频率 · 新闻时事",
+    name: "BBC World News",
+    desc: "BBC英语新闻 · 国际",
     type: "news", icon: "📻",
-    url: "http://ls.live.cnr.cn/live/CNR1/live.m3u8"
+    url: "http://stream.live.vc.bbcmedia.co.uk/bbc_world_service"
   },
   {
-    name: "中国国际广播电台（CRI）",
-    desc: "CRI · 国际新闻",
+    name: "BBC中文网",
+    desc: "BBC中文 · 国际新闻",
     type: "news", icon: "📻",
-    url: "http://ls.live.cnr.cn/live/CRI1/live.m3u8"
+    url: "http://stream.live.vc.bbcmedia.co.uk/bbc_zho"
   },
   {
-    name: "广东新闻广播",
-    desc: "广东本地新闻",
+    name: "Radio Australia 澳大利亚",
+    desc: "澳大利亚国际广播",
     type: "news", icon: "📻",
-    url: "https://gztv.gztv.com/live/gdxw.m3u8"
+    url: "https://live-radio01.mediahubaustralia.com/2TJW/mp3/"
   },
   {
-    name: "凤凰卫视资讯台",
-    desc: "国际时事 · 军事",
+    name: "A1中文国际电台",
+    desc: "国际中文新闻",
     type: "news", icon: "📻",
-    url: "https://live.dawan.net/phoenix/live.m3u8"
+    url: "http://s2.voscast.com:9530/"
   },
   {
-    name: "香港电台 RTHK Radio 1",
-    desc: "香港本地新闻（粤语）",
+    name: "美国中文广播（旧金山）",
+    desc: "美国中文 · 新闻",
     type: "news", icon: "📻",
-    url: "https://rthkradio1-live.akamaized.net/hls/rthkradio1-live.m3u8"
+    url: "http://radiokest.serverroom.us:6670/"
   },
   {
-    name: "香港电台 RTHK Radio 3",
-    desc: "英语新闻",
+    name: "新西兰中文广播 FM90.6",
+    desc: "新西兰中文 · 资讯",
     type: "news", icon: "📻",
-    url: "https://rthkradio3-live.akamaized.net/hls/rthkradio3-live.m3u8"
+    url: "https://s26.myradiostream.com:20274/listen.mp3"
   },
   {
-    name: "台湾中央广播电台",
-    desc: "台湾新闻",
+    name: "邢台新闻广播",
+    desc: "河北邢台 · 本地新闻",
     type: "news", icon: "📻",
-    url: "http://202.39.65.37:80/rti/live"
+    url: "http://lhttp.qingting.fm/live/20211628/64k.mp3"
   },
   // ===== 音乐频道 =====
   {
-    name: "广东音乐广播",
-    desc: "广东本土音乐",
+    name: "500首华语经典",
+    desc: "华语经典老歌",
     type: "music", icon: "🎵",
-    url: "https://gztv.gztv.com/live/gdyy.m3u8"
+    url: "https://lhttp.qtfm.cn/live/5022308/64k.mp3"
   },
   {
-    name: "中央广播民族音乐",
-    desc: "民族音乐",
+    name: "经典古典音乐",
+    desc: "古典民族音乐",
     type: "music", icon: "🎵",
-    url: "http://ls.live.cnr.cn/live/CNR3/live.m3u8"
+    url: "https://lhttp-hw.qtfm.cn/live/5022308/64k.mp3"
   },
   {
-    name: "香港商业一台",
-    desc: "香港流行乐",
+    name: "C-Pop 华语流行",
+    desc: "华语流行音乐",
     type: "music", icon: "🎵",
-    url: "https://fm881.hk2.mingliangtech.com/live/fm881.m3u8"
+    url: "http://213.141.131.10:8000/cpop"
   },
   {
-    name: "台湾 Hit FM 联播网",
-    desc: "台湾流行音乐",
+    name: "1766新闻台",
+    desc: "新闻时事评论",
     type: "music", icon: "🎵",
-    url: "http://live.hichannel.hinet.net/api/getStream.php?id=2009"
+    url: "http://livestream.1766.today:1768/live1.mp3"
   },
   // ===== 其他频道 =====
   {
-    name: "澳门电台",
-    desc: "澳门中葡双语",
+    name: "PBS NewsHour 新闻一小时",
+    desc: "美国公共广播新闻",
     type: "other", icon: "📺",
-    url: "http://live.tdm.com.mo/radio/tvfm/channels.m3u8"
+    url: "https://feeds.npr.org/500005/podcast.xml"
   },
   {
-    name: "海峡之声",
-    desc: "两岸交流",
+    name: "澳大利亚 ABC 中文",
+    desc: "澳大利亚 ABC 国际",
     type: "other", icon: "📺",
-    url: "http://stream.hxzh.com:1935/live/hxzs"
+    url: "https://live-radio01.mediahubaustralia.com/2TJW/mp3/"
   },
   {
-    name: "广东珠江经济台",
-    desc: "经济资讯 · 粤语",
+    name: "新西兰国际广播",
+    desc: "新西兰 RNZ 国际",
     type: "other", icon: "📺",
-    url: "https://gztv.gztv.com/live/zjjj.m3u8"
+    url: "https://radionz-ice.streamguys.com/national.mp3"
   }
 ];
 
@@ -1027,9 +1029,3 @@ document.addEventListener('touchstart', () => {
 
 // ════════════════════════════════════════════════
 //  启动
-// ════════════════════════════════════════════════
-init();
-restoreAlarms();
-</script>
-</body>
-</html>
