@@ -1,0 +1,17 @@
+{
+  "mailbox": "receipts@example.com",
+  "preferred_mail_client": "已连接邮箱",
+  "ledger_path": "C:/Work/Reimbursements/reimbursement-ledger.xlsx",
+  "worksheet": "报销台账",
+  "reimbursement_root": "C:/Work/Reimbursements/receipts",
+  "groups": [
+    {
+      "name": "主体甲",
+      "buyer_names": ["示例主体甲有限公司"]
+    },
+    {
+      "name": "主体乙",
+      "buyer_names": ["示例主体乙有限公司"]
+    }
+  ]
+}

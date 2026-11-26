@@ -1,0 +1,4 @@
+interface:
+  display_name: "月度个人报销"
+  short_description: "核对每月报销发票，补录台账并按主体打包发票和通行明细"
+  default_prompt: "用 $monthly-personal-reimbursement 处理本月个人报销，核对发票、更新台账，并按主体打包。"

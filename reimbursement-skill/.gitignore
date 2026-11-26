@@ -1,0 +1,28 @@
+# Per-user setup and run files
+/profiles/
+/local/
+/outputs/
+/work/
+.env
+.env.*
+*.local.json
+*.local.yaml
+*.local.yml
+*manifest*.json
+
+# Source receipts, workbooks, and generated packs
+*.pdf
+*.ofd
+*.xml
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+*.eml
+*.msg
+*.zip
+
+# Local Python artifacts
+__pycache__/
+*.py[cod]
+.venv/
